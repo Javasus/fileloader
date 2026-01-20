@@ -1,4 +1,6 @@
 package org.nosulkora.fileloader.repository;
 
-public interface UserRepository extends GenericRepository {
+import org.nosulkora.fileloader.entity.User;
+
+public interface UserRepository extends GenericRepository<User, Integer> {
 }

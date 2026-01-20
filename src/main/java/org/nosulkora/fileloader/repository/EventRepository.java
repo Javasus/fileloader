@@ -1,4 +1,6 @@
 package org.nosulkora.fileloader.repository;
 
-public interface EventRepository extends GenericRepository {
+import org.nosulkora.fileloader.entity.Event;
+
+public interface EventRepository extends GenericRepository<Event, Integer> {
 }

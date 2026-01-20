@@ -1,5 +1,6 @@
 package org.nosulkora.fileloader.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -21,13 +22,10 @@ public class User {
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Event> events = new ArrayList<>();
 
     public User() {
-    }
-
-    public User(String name) {
-        this.name = name;
     }
 
     public java.lang.Integer getId() {

@@ -1,5 +1,8 @@
 package org.nosulkora.fileloader.database;
 
+import org.nosulkora.fileloader.database.DatabaseManager;
+import org.nosulkora.fileloader.database.FlywayManager;
+
 public class DatabaseSetupTest {
     public static void main(String[] args) {
         System.out.println("=== Database Setup Test ===\n");
@@ -11,7 +14,7 @@ public class DatabaseSetupTest {
 
             // 2. Запуск миграций
             System.out.println("1. Running Flyway migrations...");
-            FlywayManager.runMigration();
+            FlywayManager.runMigrations();
 
             // 3. Проверка Hibernate
             System.out.println("2. Testing Hibernate connection...");

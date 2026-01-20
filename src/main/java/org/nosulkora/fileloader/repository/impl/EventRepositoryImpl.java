@@ -1,32 +1,44 @@
 package org.nosulkora.fileloader.repository.impl;
 
+import org.nosulkora.fileloader.entity.Event;
 import org.nosulkora.fileloader.repository.EventRepository;
+import org.nosulkora.fileloader.utils.SessionManager;
 
 import java.util.List;
 
 public class EventRepositoryImpl implements EventRepository {
     @Override
-    public Object save(Object o) {
-        return null;
+    public Event save(Event event) {
+        return SessionManager.execute(session -> session.merge(event));
     }
 
     @Override
-    public Object update(Object o) {
-        return null;
+    public Event update(Event event) {
+        return save(event);
     }
 
     @Override
-    public Object getById(Object o) {
-        return null;
+    public Event getById(Integer id) {
+        return SessionManager.executeReadOnly(session -> session.get(Event.class, id));
     }
 
     @Override
-    public List getAll() {
-        return null;
+    public List<Event> getAll() {
+        return SessionManager.executeReadOnly(session -> session
+                .createQuery("FROM Event", Event.class)
+                .getResultList());
     }
 
     @Override
-    public boolean deleteById(Object o) {
-        return false;
+    public boolean deleteById(Integer id) {
+        Boolean result = SessionManager.execute(session -> {
+            Event event = session.get(Event.class, id);
+            if (event != null) {
+                session.remove(id);
+                return true;
+            }
+            return false;
+        });
+        return Boolean.TRUE.equals(result);
     }
 }

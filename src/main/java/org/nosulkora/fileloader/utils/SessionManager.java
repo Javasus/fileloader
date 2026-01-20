@@ -48,9 +48,10 @@ public class SessionManager {
         try (Session session = DatabaseManager.getSessionFactory().openSession()) {
             T result = operation.apply(session);
             if (result == null) {
-                throw new SQLException("Ошибка при выполнении запроса без открытия транзакции.");
+                logger.debug("Объект не найден (возвращен null)");
+            } else {
+                logger.debug("Транзакция завершена успешно");
             }
-            logger.debug("Запрос завершен успешно");
             return result;
         } catch (Exception e) {
             logger.warn("Ошибка выполнения операции только для чтения", e);
