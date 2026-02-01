@@ -15,10 +15,11 @@ import java.util.List;
 @WebServlet("/api/users/*")
 public class UserServlet extends HttpServlet {
 
+    private final ServletUtils servletUtils = new ServletUtils();
     private final UserController userController = new UserController();
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // create User -> POST api/users
+    //create User -> POST api/users
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
@@ -26,24 +27,24 @@ public class UserServlet extends HttpServlet {
         resp.setContentType("application/json");
 
         try {
-            User user = mapper.readValue(req.getReader(), User.class);
+            User user = objectMapper.readValue(req.getReader(), User.class);
             if (user.getName() == null || user.getName().trim().isEmpty()) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Name is required\"}");
+                resp.getWriter().write("{\"error\":\"\"Имя не задано\"}");
                 return;
             }
 
             User createdUser = userController.createUser(user.getName());
             if (createdUser != null) {
                 resp.setStatus(HttpServletResponse.SC_CREATED);
-                mapper.writeValue(resp.getWriter(), createdUser);
+                objectMapper.writeValue(resp.getWriter(), createdUser);
             } else {
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                resp.getWriter().write("{\"error\":\"Failed to create user\"}");
+                resp.getWriter().write("{\"error\":\"Ошибка при создании пользователя\"}");
             }
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Invalid JSON\"}");
+            resp.getWriter().write("{\"error\":\"Неккоректный JSON\"}");
         }
     }
 
@@ -58,30 +59,30 @@ public class UserServlet extends HttpServlet {
             String pathInfo = req.getPathInfo();
             if (pathInfo == null || pathInfo.equals("/")) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"User ID required\"}");
+                resp.getWriter().write("{\"error\":\"ID пользователя отсутствует\"}");
             }
 
-            Integer id = extractId(pathInfo);
-            User user = mapper.readValue(req.getReader(), User.class);
+            Integer id = servletUtils.extractId(pathInfo);
+            User user = objectMapper.readValue(req.getReader(), User.class);
             if (user.getName() == null || user.getName().trim().isEmpty()) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Name is required\"}");
+                resp.getWriter().write("{\"error\":\"Имя не задано\"}");
                 return;
             }
 
             User updateUser = userController.updateUser(id, user.getName());
             if (updateUser != null) {
-                mapper.writeValue(resp.getWriter(), updateUser);
+                objectMapper.writeValue(resp.getWriter(), updateUser);
             } else {
                 resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                resp.getWriter().write("{\"error\":\"User not found\"}");
+                resp.getWriter().write("{\"error\":\"Пользователь не найден\"}");
             }
         } catch (NumberFormatException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Invalid user ID\"}");
+            resp.getWriter().write("{\"error\":\"Неверный ID пользователя\"}");
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Invalid Json\"}");
+            resp.getWriter().write("{\"error\":\"Неккоректный Json\"}");
         }
     }
 
@@ -97,21 +98,21 @@ public class UserServlet extends HttpServlet {
         if (pathInfo == null || pathInfo.equals("/")) {
             // Все пользователи
             List<User> users = userController.getAllUsers();
-            mapper.writeValue(resp.getWriter(), users);
+            objectMapper.writeValue(resp.getWriter(), users);
         } else {
             // Конкретный пользователь
             try {
-                Integer id = extractId(pathInfo);
+                Integer id = servletUtils.extractId(pathInfo);
                 User user = userController.getUserById(id);
                 if (user != null) {
-                    mapper.writeValue(resp.getWriter(), user);
+                    objectMapper.writeValue(resp.getWriter(), user);
                 } else {
                     resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                    resp.getWriter().write("{\"error\":\"User not found\"}");
+                    resp.getWriter().write("{\"error\":\"Пользователь не найден\"}");
                 }
             } catch (NumberFormatException e) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"Invalid user ID\"}");
+                resp.getWriter().write("{\"error\":\"Неверный ID пользователя\"}");
             }
         }
     }
@@ -127,31 +128,25 @@ public class UserServlet extends HttpServlet {
             String pathInfo = req.getPathInfo();
             if (pathInfo == null || pathInfo.equals("/")) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                resp.getWriter().write("{\"error\":\"User ID required\"}");
+                resp.getWriter().write("{\"error\":\"ID пользователя отсутствует\"}");
                 return;
             }
 
-            Integer id = extractId(pathInfo);
+            Integer id = servletUtils.extractId(pathInfo);
             boolean resultDelete = userController.deleteUserById(id);
             if (resultDelete) {
                 resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
             } else {
                 resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                resp.getWriter().write("{\"error\":\"User not found\"}");
+                resp.getWriter().write("{\"error\":\"Пользователь не найден\"}");
             }
         } catch (NumberFormatException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            resp.getWriter().write("{\"error\":\"Invalid user ID\"}");
+            resp.getWriter().write("{\"error\":\"Неверный ID пользователя\"}");
         }
     }
 
-    private Integer extractId(String pathInfo) throws NumberFormatException {
-        if (pathInfo != null) {
-            String idStr = pathInfo.replace("/", "");
-            return Integer.parseInt(idStr);
-        }
-        throw new NumberFormatException();
-    }
+
 
     private void setUTF8Encoding(HttpServletRequest req, HttpServletResponse resp) {
         try {
