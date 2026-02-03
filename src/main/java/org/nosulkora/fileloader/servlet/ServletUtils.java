@@ -1,12 +1,17 @@
 package org.nosulkora.fileloader.servlet;
 
 import jakarta.servlet.http.Part;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
 public class ServletUtils {
+
+    private static final Logger logger = LoggerFactory.getLogger(UploadServlet.class);
 
     /**
      * Возвращает ID из URL-строки.
@@ -76,7 +81,8 @@ public class ServletUtils {
             Path uploadedPath = Paths.get(uploadDir).toAbsolutePath().normalize();
             Path requestedPath = Paths.get(filepath).toAbsolutePath().normalize();
             return requestedPath.startsWith(uploadedPath);
-        } catch (Exception e) {
+        } catch (InvalidPathException e) {
+            logger.error("Указан некорректный путь", e);
             return false;
         }
     }

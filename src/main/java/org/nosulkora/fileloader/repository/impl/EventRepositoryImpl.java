@@ -34,11 +34,21 @@ public class EventRepositoryImpl implements EventRepository {
         Boolean result = SessionManager.execute(session -> {
             Event event = session.get(Event.class, id);
             if (event != null) {
-                session.remove(id);
+                session.remove(event);
                 return true;
             }
             return false;
         });
         return Boolean.TRUE.equals(result);
+    }
+
+    @Override
+    public Event findLatestByFileId(Integer fileId) {
+        return SessionManager.executeReadOnly(session ->
+                session.createQuery("FROM Event WHERE file.id = :fileId ORDER BY id DESC", Event.class)
+                        .setParameter("fileId", fileId)
+                        .setMaxResults(1)
+                        .uniqueResult()
+        );
     }
 }

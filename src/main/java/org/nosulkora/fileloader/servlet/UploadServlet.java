@@ -13,9 +13,13 @@ import org.nosulkora.fileloader.controller.FileController;
 import org.nosulkora.fileloader.controller.UserController;
 import org.nosulkora.fileloader.entity.Event;
 import org.nosulkora.fileloader.entity.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,23 +35,24 @@ import java.util.Objects;
 )
 public class UploadServlet extends HttpServlet {
 
-    private final static ServletUtils SERVLET_UTILS = new ServletUtils();
+    private static final ServletUtils SERVLET_UTILS = new ServletUtils();
+    private static final Logger logger = LoggerFactory.getLogger(UploadServlet.class);
+    private static final String UPLOAD_DIR = "C:/javaStudy/fileloader/src/main/resources/uploads";
 
     private final EventController eventController = new EventController();
     private final FileController fileController = new FileController();
     private final UserController userController = new UserController();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private static final String UPLOAD_DIR = "C:/javaStudy/fileloader/src/main/resources/uploads";
 
     @Override
     public void init() throws ServletException {
         File uploadDir = new File(UPLOAD_DIR);
         if (!uploadDir.exists()) {
             boolean created = uploadDir.mkdirs();
-            System.out.println("Папка создана: " + created + " | Путь: " + UPLOAD_DIR);
+            logger.debug("Папка создана: " + created + " | Путь: " + UPLOAD_DIR);
         }
-        System.out.println("Папка для загрузок: " + UPLOAD_DIR);
+        logger.info("Папка для загрузок: " + UPLOAD_DIR);
     }
 
     //upload File -> post api/files
@@ -58,7 +63,7 @@ public class UploadServlet extends HttpServlet {
         resp.setContentType("application/json");
 
         try {
-            if (req.getContentType() != null && req.getContentType().startsWith("multipart/form-data")) {
+            if (!req.getContentType().startsWith("multipart/form-data")) {
                 returnError(
                         resp,
                         HttpServletResponse.SC_BAD_REQUEST,
@@ -114,7 +119,7 @@ public class UploadServlet extends HttpServlet {
             String uniqueFileName = SERVLET_UTILS.generateUniqueFileName(fileExtension);
             Path filePath = Paths.get(UPLOAD_DIR, uniqueFileName);
             Files.copy(filePart.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("Файл сохранён - " + filePath);
+            logger.info("Файл сохранён - " + filePath);
 
             org.nosulkora.fileloader.entity.File savedFile =
                     fileController.createFile(originalFileName, filePath.toString());
@@ -167,7 +172,7 @@ public class UploadServlet extends HttpServlet {
         resp.setContentType("application/json");
 
         try {
-            if (req.getContentType() != null && req.getContentType().startsWith("multipart/form-data")) {
+            if (!req.getContentType().startsWith("multipart/form-data")) {
                 returnError(
                         resp,
                         HttpServletResponse.SC_BAD_REQUEST,
@@ -176,7 +181,8 @@ public class UploadServlet extends HttpServlet {
                 return;
             }
 
-            String fileIdStr = req.getParameter("fileId");
+            String pathInfo = req.getPathInfo();
+
             Part filePart = req.getPart("file");
 
             if (filePart == null || filePart.getSize() == 0) {
@@ -190,9 +196,9 @@ public class UploadServlet extends HttpServlet {
 
             Integer fileId = null;
             org.nosulkora.fileloader.entity.File file = null;
-            if (fileIdStr != null && !fileIdStr.trim().isEmpty()) {
+            if (pathInfo != null && !pathInfo.trim().isEmpty()) {
                 try {
-                    fileId = Integer.parseInt(fileIdStr);
+                    fileId = SERVLET_UTILS.extractId(pathInfo);
                     file = fileController.getFileById(fileId);
                     if (Objects.isNull(file)) {
                         returnError(
@@ -223,8 +229,19 @@ public class UploadServlet extends HttpServlet {
             String fileExtension = SERVLET_UTILS.getFileExtension(originalFileName);
             String uniqueFileName = SERVLET_UTILS.generateUniqueFileName(fileExtension);
             Path filePath = Paths.get(UPLOAD_DIR, uniqueFileName);
+            // сохраняем старый файл
+            String oldFilePath = file.getFilePath();
+            File oldFile = new File(oldFilePath);
+            // сохраняем новый файл
             Files.copy(filePart.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("Файл сохранён - " + filePath);
+            // удаляем старый файл
+            if (oldFile.exists() && !oldFile.getPath().equals(filePath.toString())) {
+                boolean deleted = oldFile.delete();
+                if (!deleted) {
+                    logger.warn("Не удалось удалить старый файл: {}", oldFilePath);
+                }
+            }
+            logger.info("Файл сохранён - " + filePath);
 
             org.nosulkora.fileloader.entity.File updatedFile =
                     fileController.updateFile(fileId, originalFileName, filePath.toString());
@@ -238,17 +255,9 @@ public class UploadServlet extends HttpServlet {
                 return;
             }
 
-            /** TODO
-             * РЕШИЛИ делать новый event, наверно лучше сделать через EventRepositoryImpl, а не возвратом всех евентов!
-             */
-            List<Event> events = eventController.getAllEvents();
-            Event event = events.stream()
-                    .filter(ev -> ev.getFile().getId().equals(updatedFile.getId()))
-                    .findFirst()
-                    .orElse(null);
-
-            if (Objects.nonNull(event)) {
-                User user = event.getUser();
+            Event latestEvent = eventController.findLatestByFileId(fileId);
+            if (Objects.nonNull(latestEvent)) {
+                User user = latestEvent.getUser();
                 Event newEvent = eventController.createEvent(user, updatedFile);
                 if (Objects.isNull(newEvent)) {
                     returnError(
@@ -274,7 +283,7 @@ public class UploadServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             returnError(
                     resp,
-                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    HttpServletResponse.SC_BAD_REQUEST,
                     "{\"error\": \"Некорректный ID файла\"}"
             );
         } catch (Exception e) {
@@ -330,9 +339,16 @@ public class UploadServlet extends HttpServlet {
                 );
                 resp.setContentLength((int) physicalFile.length());
 
-                Files.copy(physicalFile.toPath(), resp.getOutputStream());
+                // TODO Если не будет работать вывод вернуть старый обратно.
+//                Files.copy(physicalFile.toPath(), resp.getOutputStream());
+                try (InputStream in = Files.newInputStream(physicalFile.toPath());
+                     OutputStream out = resp.getOutputStream()) {
+                    in.transferTo(out);
+                } catch (IOException e) {
+                    logger.error("Ошибка отправки файла", e);
+                }
             } catch (NumberFormatException e) {
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 objectMapper.writeValue(
                         resp.getWriter(),
                         "{\"error\": \"Некорректный ID файла\"}"
@@ -366,9 +382,6 @@ public class UploadServlet extends HttpServlet {
 
             int fileId = SERVLET_UTILS.extractId(pathInfo);
 
-            /** TODO
-             * РЕШИЛИ делать новый event, наверно лучше сделать через EventRepositoryImpl, а не возвратом всех евентов!
-             */
             org.nosulkora.fileloader.entity.File file = fileController.getFileById(fileId);
             if (Objects.isNull(file)) {
                 returnError(
@@ -379,14 +392,9 @@ public class UploadServlet extends HttpServlet {
                 return;
             }
 
-            List<Event> events = eventController.getAllEvents();
-            Event event = events.stream()
-                    .filter(ev -> ev.getFile().getId().equals(fileId))
-                    .findFirst()
-                    .orElse(null);
-
-            if (Objects.nonNull(event)) {
-                User user = event.getUser();
+            Event latestEvent = eventController.findLatestByFileId(fileId);
+            if (Objects.nonNull(latestEvent)) {
+                User user = latestEvent.getUser();
                 Event newEvent = eventController.createEvent(user, file);
                 if (Objects.isNull(newEvent)) {
                     returnError(
@@ -400,6 +408,13 @@ public class UploadServlet extends HttpServlet {
 
             boolean resultDelete = fileController.deleteFileById(fileId);
             if (resultDelete) {
+                File physicalFile = new File(file.getFilePath());
+                if (physicalFile.exists()) {
+                    boolean deleted = physicalFile.delete();
+                    if (!deleted) {
+                        logger.warn("Не удалось удалить физический файл: {}", file.getFilePath());
+                    }
+                }
                 resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
             } else {
                 resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -408,7 +423,7 @@ public class UploadServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             returnError(
                     resp,
-                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    HttpServletResponse.SC_BAD_REQUEST,
                     "{\"error\": \"Некорректный ID файла\"}"
             );
         } catch (Exception e) {

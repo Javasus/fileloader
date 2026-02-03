@@ -20,9 +20,6 @@ public class SessionManager {
         try (Session session = DatabaseManager.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
             T result = operation.apply(session);
-            if (result == null) {
-                throw new SQLException("Ошибка при выполнении транзакции");
-            }
             transaction.commit();
             logger.debug("Транзакция завершена успешно");
             return result;
@@ -46,7 +43,9 @@ public class SessionManager {
     public static <T> T executeReadOnly(Function<Session, T> operation) {
         Transaction transaction = null;
         try (Session session = DatabaseManager.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
             T result = operation.apply(session);
+            transaction.commit();
             if (result == null) {
                 logger.debug("Объект не найден (возвращен null)");
             } else {

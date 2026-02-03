@@ -8,12 +8,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.nosulkora.fileloader.controller.UserController;
 import org.nosulkora.fileloader.entity.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
 
 @WebServlet("/api/users/*")
 public class UserServlet extends HttpServlet {
+
+    private static final Logger logger = LoggerFactory.getLogger(UploadServlet.class);
 
     private final ServletUtils servletUtils = new ServletUtils();
     private final UserController userController = new UserController();
@@ -24,7 +28,6 @@ public class UserServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
         setUTF8Encoding(req, resp);
-        resp.setContentType("application/json");
 
         try {
             User user = objectMapper.readValue(req.getReader(), User.class);
@@ -45,6 +48,7 @@ public class UserServlet extends HttpServlet {
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("{\"error\":\"Неккоректный JSON\"}");
+            logger.error("Ошибка при создании user", e);
         }
     }
 
@@ -53,13 +57,13 @@ public class UserServlet extends HttpServlet {
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
         setUTF8Encoding(req, resp);
-        resp.setContentType("application/json");
 
         try {
             String pathInfo = req.getPathInfo();
             if (pathInfo == null || pathInfo.equals("/")) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 resp.getWriter().write("{\"error\":\"ID пользователя отсутствует\"}");
+                return;
             }
 
             Integer id = servletUtils.extractId(pathInfo);
@@ -80,9 +84,11 @@ public class UserServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("{\"error\":\"Неверный ID пользователя\"}");
+            logger.error("Неверный userId, при обновлении пользователя");
         } catch (Exception e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("{\"error\":\"Неккоректный Json\"}");
+            logger.error("Ошибка при обновлении пользователя", e);
         }
     }
 
@@ -91,8 +97,6 @@ public class UserServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
         setUTF8Encoding(req, resp);
-        resp.setContentType("application/json");
-
         String pathInfo = req.getPathInfo();
 
         if (pathInfo == null || pathInfo.equals("/")) {
@@ -113,6 +117,7 @@ public class UserServlet extends HttpServlet {
             } catch (NumberFormatException e) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 resp.getWriter().write("{\"error\":\"Неверный ID пользователя\"}");
+                logger.error("Ошибка при возврате пользователя", e);
             }
         }
     }
@@ -122,7 +127,6 @@ public class UserServlet extends HttpServlet {
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
         setUTF8Encoding(req, resp);
-        resp.setContentType("application/json");
 
         try {
             String pathInfo = req.getPathInfo();
@@ -143,16 +147,16 @@ public class UserServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             resp.getWriter().write("{\"error\":\"Неверный ID пользователя\"}");
+            logger.error("ошибка при удалении пользователя", e);
         }
     }
-
 
 
     private void setUTF8Encoding(HttpServletRequest req, HttpServletResponse resp) {
         try {
             req.setCharacterEncoding("UTF-8");
         } catch (Exception e) {
-            // ignore
+            logger.error("Не удалось поменять кодировку.", e);
         }
         resp.setCharacterEncoding("UTF-8");
         resp.setContentType("application/json; charset=UTF-8");

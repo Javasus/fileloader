@@ -4,9 +4,7 @@ import org.nosulkora.fileloader.entity.Event;
 import org.nosulkora.fileloader.entity.File;
 import org.nosulkora.fileloader.entity.User;
 import org.nosulkora.fileloader.repository.EventRepository;
-import org.nosulkora.fileloader.repository.UserRepository;
 import org.nosulkora.fileloader.repository.impl.EventRepositoryImpl;
-import org.nosulkora.fileloader.repository.impl.UserRepositoryImpl;
 
 import java.util.List;
 import java.util.Objects;
@@ -14,11 +12,9 @@ import java.util.Objects;
 public class EventController {
 
     private final EventRepository eventRepository;
-    private final UserRepository userRepository;
 
     public EventController() {
         this.eventRepository = new EventRepositoryImpl();
-        this.userRepository = new UserRepositoryImpl();
     }
 
     public Event createEvent(User user, File file) {
@@ -45,5 +41,9 @@ public class EventController {
 
     public boolean deleteEventById(Integer id) {
         return eventRepository.deleteById(id);
+    }
+
+    public Event findLatestByFileId(Integer fileId) {
+        return eventRepository.findLatestByFileId(fileId);
     }
 }

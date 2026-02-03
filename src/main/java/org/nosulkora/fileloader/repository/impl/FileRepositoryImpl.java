@@ -34,7 +34,7 @@ public class FileRepositoryImpl implements FileRepository {
         Boolean result = SessionManager.execute(session -> {
             File file = session.get(File.class, id);
             if (file != null) {
-                session.remove(id);
+                session.remove(file);
                 return true;
             }
             return false;
