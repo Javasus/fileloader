@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
+import org.apache.commons.fileupload.util.mime.MimeUtility;
 import org.nosulkora.fileloader.controller.EventController;
 import org.nosulkora.fileloader.controller.FileController;
 import org.nosulkora.fileloader.controller.UserController;
@@ -20,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,11 +30,6 @@ import java.util.List;
 import java.util.Objects;
 
 @WebServlet("/api/files/*")
-@MultipartConfig(
-        fileSizeThreshold = 1024 * 1024,   // 1MB
-        maxFileSize = 1024 * 1024 * 10,    // 10MB
-        maxRequestSize = 1024 * 1024 * 50  // 50MB
-)
 public class UploadServlet extends HttpServlet {
 
     private static final ServletUtils SERVLET_UTILS = new ServletUtils();
@@ -332,11 +329,13 @@ public class UploadServlet extends HttpServlet {
                     return;
                 }
 
-                resp.setContentType(getServletContext().getMimeType(fileEntity.getName()));
-                resp.setHeader(
-                        "Content-Disposition",
-                        "attachment; filename=\"" + fileEntity.getName() + "\""
-                );
+                resp.setCharacterEncoding("UTF-8");
+                String fileName = fileEntity.getName();
+                resp.setContentType(getServletContext().getMimeType(fileName));
+                String encodedFileName = URLEncoder.encode(fileName, "UTF-8")
+                        .replaceAll("\\+", "%20");
+                resp.setHeader("Content-Disposition",
+                        "attachment; filename*=UTF-8''" + encodedFileName);
                 resp.setContentLength((int) physicalFile.length());
 
                 // TODO Если не будет работать вывод вернуть старый обратно.

@@ -1,6 +1,7 @@
 package org.nosulkora.fileloader;
 
 import org.apache.catalina.startup.Tomcat;
+import org.nosulkora.fileloader.servlet.UserServlet;
 
 import java.io.File;
 
@@ -20,6 +21,7 @@ public class TomcatStarter {
         System.out.println("Tomcat запущен");
         System.out.println("URL: http://localhost:8080/fileloader");
         System.out.println("API: http://localhost:8080/fileloader/api/users");
+        System.out.println("API: http://localhost:8080/fileloader/api/files");
 
         // Shutdown hook
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
