@@ -2,18 +2,19 @@ package org.nosulkora.fileloader.servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
-import org.apache.commons.fileupload.util.mime.MimeUtility;
 import org.nosulkora.fileloader.controller.EventController;
 import org.nosulkora.fileloader.controller.FileController;
 import org.nosulkora.fileloader.controller.UserController;
 import org.nosulkora.fileloader.entity.Event;
 import org.nosulkora.fileloader.entity.User;
+import org.nosulkora.fileloader.repository.impl.EventRepositoryImpl;
+import org.nosulkora.fileloader.repository.impl.FileRepositoryImpl;
+import org.nosulkora.fileloader.repository.impl.UserRepositoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,10 +37,11 @@ public class UploadServlet extends HttpServlet {
     private static final Logger logger = LoggerFactory.getLogger(UploadServlet.class);
     private static final String UPLOAD_DIR = "C:/javaStudy/fileloader/src/main/resources/uploads";
 
-    private final EventController eventController = new EventController();
-    private final FileController fileController = new FileController();
-    private final UserController userController = new UserController();
+    private final EventController eventController = new EventController(new EventRepositoryImpl());
+    private final FileController fileController = new FileController(new FileRepositoryImpl());
+    private final UserController userController = new UserController(new UserRepositoryImpl());
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ServletUtils servletUtils = new ServletUtils();
 
 
     @Override
@@ -56,7 +58,7 @@ public class UploadServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-        setUTF8Encoding(req, resp);
+        servletUtils.setUTF8Encoding(req, resp);
         resp.setContentType("application/json");
 
         try {
@@ -165,7 +167,7 @@ public class UploadServlet extends HttpServlet {
     // update file -> put api/files/1 , где 1 - это fileId.
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        setUTF8Encoding(req, resp);
+        servletUtils.setUTF8Encoding(req, resp);
         resp.setContentType("application/json");
 
         try {
@@ -295,7 +297,7 @@ public class UploadServlet extends HttpServlet {
     // get all files OR download File -> GET api/files OR api/files/1
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        setUTF8Encoding(req, resp);
+        servletUtils.setUTF8Encoding(req, resp);
 
         String pathInfo = req.getPathInfo();
         if (pathInfo == null || pathInfo.equals("/")) {
@@ -312,12 +314,14 @@ public class UploadServlet extends HttpServlet {
                             HttpServletResponse.SC_NOT_FOUND,
                             "{\"error\": \"Файл не найден\"}"
                     );
+                    logger.error("Файл с id = {} не найден", fileId);
                     return;
                 }
 
                 File physicalFile = new File(fileEntity.getFilePath());
                 if (!SERVLET_UTILS.isSafePath(UPLOAD_DIR, physicalFile.getPath())) {
                     returnError(resp, 403, "{\"error\": \"Отказано в доступе\"}");
+                    logger.error("Ошибка пути файла - {}",physicalFile.getPath());
                     return;
                 }
                 if (!physicalFile.exists()) {
@@ -326,6 +330,7 @@ public class UploadServlet extends HttpServlet {
                             HttpServletResponse.SC_NOT_FOUND,
                             "{\"error\": \"Физический файл не найден\"}"
                     );
+                    logger.error("Файл по пути не найден - {}",physicalFile.getPath());
                     return;
                 }
 
@@ -366,7 +371,7 @@ public class UploadServlet extends HttpServlet {
     // Delete File -> DELETE api/files/1
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        setUTF8Encoding(req, resp);
+        servletUtils.setUTF8Encoding(req, resp);
         resp.setContentType("application/json");
         try {
             String pathInfo = req.getPathInfo();
@@ -437,25 +442,8 @@ public class UploadServlet extends HttpServlet {
     /**
      * Возвращает ответ с ошибкой.
      */
-    private void returnError(
-            HttpServletResponse resp,
-            int scBadRequest,
-            String answer
-    ) throws IOException {
+    private void returnError(HttpServletResponse resp, int scBadRequest, String answer) throws IOException {
         resp.setStatus(scBadRequest);
         objectMapper.writeValue(resp.getWriter(), answer);
-    }
-
-    /**
-     * Меняет кодировку на UTF-8.
-     */
-    private void setUTF8Encoding(HttpServletRequest req, HttpServletResponse resp) {
-        try {
-            req.setCharacterEncoding("UTF-8");
-        } catch (Exception e) {
-            // ignore
-        }
-        resp.setCharacterEncoding("UTF-8");
-        resp.setContentType("application/json; charset=UTF-8");
     }
 }

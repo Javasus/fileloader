@@ -28,6 +28,12 @@ public class User {
     public User() {
     }
 
+    public User(Integer id, String name, List<Event> events) {
+        this.id = id;
+        this.name = name;
+        this.events = events;
+    }
+
     public Integer getId() {
         return id;
     }

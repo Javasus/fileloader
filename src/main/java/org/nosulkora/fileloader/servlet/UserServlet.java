@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.nosulkora.fileloader.controller.UserController;
 import org.nosulkora.fileloader.entity.User;
+import org.nosulkora.fileloader.repository.impl.UserRepositoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,14 +21,14 @@ public class UserServlet extends HttpServlet {
     private static final Logger logger = LoggerFactory.getLogger(UploadServlet.class);
 
     private final ServletUtils servletUtils = new ServletUtils();
-    private final UserController userController = new UserController();
+    private final UserController userController = new UserController(new UserRepositoryImpl());
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     //create User -> POST api/users
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-        setUTF8Encoding(req, resp);
+        servletUtils.setUTF8Encoding(req, resp);
 
         try {
             User user = objectMapper.readValue(req.getReader(), User.class);
@@ -56,7 +57,7 @@ public class UserServlet extends HttpServlet {
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-        setUTF8Encoding(req, resp);
+        servletUtils.setUTF8Encoding(req, resp);
 
         try {
             String pathInfo = req.getPathInfo();
@@ -96,7 +97,7 @@ public class UserServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-        setUTF8Encoding(req, resp);
+        servletUtils.setUTF8Encoding(req, resp);
         String pathInfo = req.getPathInfo();
 
         if (pathInfo == null || pathInfo.equals("/")) {
@@ -113,6 +114,7 @@ public class UserServlet extends HttpServlet {
                 } else {
                     resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
                     resp.getWriter().write("{\"error\":\"Пользователь не найден\"}");
+                    return;
                 }
             } catch (NumberFormatException e) {
                 resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -126,7 +128,7 @@ public class UserServlet extends HttpServlet {
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-        setUTF8Encoding(req, resp);
+        servletUtils.setUTF8Encoding(req, resp);
 
         try {
             String pathInfo = req.getPathInfo();
@@ -152,13 +154,4 @@ public class UserServlet extends HttpServlet {
     }
 
 
-    private void setUTF8Encoding(HttpServletRequest req, HttpServletResponse resp) {
-        try {
-            req.setCharacterEncoding("UTF-8");
-        } catch (Exception e) {
-            logger.error("Не удалось поменять кодировку.", e);
-        }
-        resp.setCharacterEncoding("UTF-8");
-        resp.setContentType("application/json; charset=UTF-8");
-    }
 }

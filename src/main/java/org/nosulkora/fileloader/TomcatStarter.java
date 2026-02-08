@@ -22,6 +22,7 @@ public class TomcatStarter {
         System.out.println("URL: http://localhost:8080/fileloader");
         System.out.println("API: http://localhost:8080/fileloader/api/users");
         System.out.println("API: http://localhost:8080/fileloader/api/files");
+        System.out.println("API: http://localhost:8080/fileloader/api/events");
 
         // Shutdown hook
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

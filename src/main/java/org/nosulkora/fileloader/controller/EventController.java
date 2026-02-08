@@ -13,8 +13,8 @@ public class EventController {
 
     private final EventRepository eventRepository;
 
-    public EventController() {
-        this.eventRepository = new EventRepositoryImpl();
+    public EventController(EventRepository eventRepository) {
+        this.eventRepository = eventRepository;
     }
 
     public Event createEvent(User user, File file) {
@@ -26,7 +26,7 @@ public class EventController {
         Event eventById = eventRepository.getById(id);
         if (Objects.nonNull(eventById)) {
             eventById.setFile(file);
-            return eventRepository.save(eventById);
+            return eventRepository.update(eventById);
         }
         return null;
     }

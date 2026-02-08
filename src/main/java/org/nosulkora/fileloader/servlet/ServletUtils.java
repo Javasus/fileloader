@@ -1,5 +1,7 @@
 package org.nosulkora.fileloader.servlet;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,5 +87,15 @@ public class ServletUtils {
             logger.error("Указан некорректный путь", e);
             return false;
         }
+    }
+
+    public void setUTF8Encoding(HttpServletRequest req, HttpServletResponse resp) {
+        try {
+            req.setCharacterEncoding("UTF-8");
+        } catch (Exception e) {
+            logger.error("Не удалось поменять кодировку.", e);
+        }
+        resp.setCharacterEncoding("UTF-8");
+        resp.setContentType("application/json; charset=UTF-8");
     }
 }

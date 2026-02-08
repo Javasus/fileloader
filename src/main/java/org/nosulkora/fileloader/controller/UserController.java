@@ -2,7 +2,6 @@ package org.nosulkora.fileloader.controller;
 
 import org.nosulkora.fileloader.entity.User;
 import org.nosulkora.fileloader.repository.UserRepository;
-import org.nosulkora.fileloader.repository.impl.UserRepositoryImpl;
 
 import java.util.List;
 import java.util.Objects;
@@ -11,8 +10,8 @@ public class UserController {
 
     private final UserRepository userRepository;
 
-    public UserController() {
-        this.userRepository = new UserRepositoryImpl();
+    public UserController(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     public User createUser(String name) {

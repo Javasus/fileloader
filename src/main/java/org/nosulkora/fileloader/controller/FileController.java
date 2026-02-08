@@ -11,8 +11,8 @@ public class FileController {
 
     private final FileRepository fileRepository;
 
-    public FileController() {
-        this.fileRepository = new FileRepositoryImpl();
+    public FileController(FileRepository fileRepository) {
+        this.fileRepository = fileRepository;
     }
 
     public File createFile(String name, String filePath) {

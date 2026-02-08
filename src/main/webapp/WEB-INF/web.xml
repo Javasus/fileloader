@@ -32,6 +32,16 @@
         <url-pattern>/api/files/*</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>EventServlet</servlet-name>
+        <servlet-class>org.nosulkora.fileloader.servlet.EventServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>EventServlet</servlet-name>
+        <url-pattern>/api/events/*</url-pattern>
+    </servlet-mapping>
+
     <!-- Фильтр для JSON -->
     <filter>
         <filter-name>CorsFilter</filter-name>

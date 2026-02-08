@@ -19,13 +19,19 @@ public class EventRepositoryImpl implements EventRepository {
 
     @Override
     public Event getById(Integer id) {
-        return SessionManager.executeReadOnly(session -> session.get(Event.class, id));
+        return SessionManager.executeReadOnly(session -> session
+                .createQuery(
+                        "SELECT e FROM Event e LEFT JOIN FETCH e.user LEFT JOIN FETCH e.file WHERE e.id = :id",
+                        Event.class)
+                .setParameter("id", id)
+                .uniqueResult()
+        );
     }
 
     @Override
     public List<Event> getAll() {
         return SessionManager.executeReadOnly(session -> session
-                .createQuery("FROM Event", Event.class)
+                .createQuery("FROM Event e LEFT JOIN FETCH e.user LEFT JOIN FETCH e.file", Event.class)
                 .getResultList());
     }
 

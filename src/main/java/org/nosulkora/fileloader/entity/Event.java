@@ -26,6 +26,12 @@ public class Event {
         this.file = file;
     }
 
+    public Event(Integer id, User user, File file) {
+        this.id = id;
+        this.user = user;
+        this.file = file;
+    }
+
     public Integer getId() {
         return id;
     }

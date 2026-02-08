@@ -1,8 +1,5 @@
 package org.nosulkora.fileloader.database;
 
-import org.nosulkora.fileloader.database.DatabaseManager;
-import org.nosulkora.fileloader.database.FlywayManager;
-
 public class DatabaseSetupTest {
     public static void main(String[] args) {
         System.out.println("=== Database Setup Test ===\n");
