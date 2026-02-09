@@ -121,5 +121,5 @@ GET http://localhost:8080/fileloader/api/events
 ```
 
 ## Автор
-Nosulko Roman
+Nosulko Roman  
 Проект разработан в рамках обучения Java-разработке.
