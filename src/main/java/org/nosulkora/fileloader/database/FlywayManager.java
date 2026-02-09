@@ -20,11 +20,12 @@ public class FlywayManager {
                 .locations("classpath:db/migration")
                 .baselineOnMigrate(true)
                 .validateOnMigrate(false)
+                .encoding("UTF-8")
                 .cleanDisabled(false)
                 .load();
     }
 
-    public static void runMigration() {
+    public static void runMigrations() {
         logger.info("Старт миграций...");
         MigrateResult result = flyway.migrate();
         logger.info("Миграции выполнены.");

@@ -8,7 +8,7 @@ public class Event {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private java.lang.Integer id;
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -22,6 +22,12 @@ public class Event {
     }
 
     public Event(User user, File file) {
+        this.user = user;
+        this.file = file;
+    }
+
+    public Event(Integer id, User user, File file) {
+        this.id = id;
         this.user = user;
         this.file = file;
     }

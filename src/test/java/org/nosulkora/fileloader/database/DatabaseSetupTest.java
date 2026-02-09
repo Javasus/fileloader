@@ -11,7 +11,7 @@ public class DatabaseSetupTest {
 
             // 2. Запуск миграций
             System.out.println("1. Running Flyway migrations...");
-            FlywayManager.runMigration();
+            FlywayManager.runMigrations();
 
             // 3. Проверка Hibernate
             System.out.println("2. Testing Hibernate connection...");

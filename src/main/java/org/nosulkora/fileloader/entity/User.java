@@ -1,5 +1,6 @@
 package org.nosulkora.fileloader.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private java.lang.Integer id;
+    private Integer id;
 
     @Column(nullable = false)
     private String name;
@@ -21,20 +22,23 @@ public class User {
             cascade = CascadeType.ALL,
             orphanRemoval = true,
             fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Event> events = new ArrayList<>();
 
     public User() {
     }
 
-    public User(String name) {
+    public User(Integer id, String name, List<Event> events) {
+        this.id = id;
         this.name = name;
+        this.events = events;
     }
 
-    public java.lang.Integer getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(java.lang.Integer id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

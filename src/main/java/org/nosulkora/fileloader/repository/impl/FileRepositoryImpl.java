@@ -1,32 +1,44 @@
 package org.nosulkora.fileloader.repository.impl;
 
+import org.nosulkora.fileloader.entity.File;
 import org.nosulkora.fileloader.repository.FileRepository;
+import org.nosulkora.fileloader.utils.SessionManager;
 
 import java.util.List;
 
 public class FileRepositoryImpl implements FileRepository {
     @Override
-    public Object save(Object o) {
-        return null;
+    public File save(File file) {
+        return SessionManager.execute(session -> session.merge(file));
     }
 
     @Override
-    public Object update(Object o) {
-        return null;
+    public File update(File file) {
+        return save(file);
     }
 
     @Override
-    public Object getById(Object o) {
-        return null;
+    public File getById(Integer id) {
+        return SessionManager.executeReadOnly(session -> session.get(File.class, id));
     }
 
     @Override
-    public List getAll() {
-        return null;
+    public List<File> getAll() {
+        return SessionManager.executeReadOnly(session -> session
+                .createQuery("FROM File", File.class)
+                .getResultList());
     }
 
     @Override
-    public boolean deleteById(Object o) {
-        return false;
+    public boolean deleteById(Integer id) {
+        Boolean result = SessionManager.execute(session -> {
+            File file = session.get(File.class, id);
+            if (file != null) {
+                session.remove(file);
+                return true;
+            }
+            return false;
+        });
+        return Boolean.TRUE.equals(result);
     }
 }
